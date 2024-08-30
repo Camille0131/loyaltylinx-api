@@ -20,14 +20,39 @@ function generateUniqueCode() {
 
 const createMerchant = async (req, res) => {
   try {
-    const { email, mobileNo, password, storeName } = req.body;
-    if (!email || !mobileNo || !password || !storeName) {
+    const {
+      email,
+      mobileNo,
+      password,
+      storeName,
+      firstName,
+      middleName,
+      lastName,
+      officeAddress,
+      shopAddress,
+    } = req.body;
+    if (
+      !email ||
+      !mobileNo ||
+      !password ||
+      !storeName ||
+      !firstName ||
+      !lastName ||
+      !officeAddress ||
+      !shopAddress
+    ) {
       throw new Error("This fields are required");
     }
+
+    const existingMerchantStoreName = await Merchant.findOne({ storeName });
     const existingMerchantEmail = await Merchant.findOne({ email });
     const existingUserEmail = await User.findOne({ email });
     const existingMerchantMobile = await Merchant.findOne({ mobileNo });
     const existingUserMobile = await User.findOne({ mobileNo });
+
+    if (existingMerchantStoreName) {
+      throw new Error("This trade name already exist");
+    }
 
     if (existingMerchantEmail || existingUserEmail) {
       throw new Error("Email already exist");
@@ -43,6 +68,11 @@ const createMerchant = async (req, res) => {
       mobileNo,
       password: hashedPassword,
       storeName,
+      firstName,
+      middleName,
+      lastName,
+      officeAddress,
+      shopAddress,
       secretCode: generateUniqueCode(),
     });
 
