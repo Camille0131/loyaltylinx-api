@@ -106,6 +106,31 @@ const createUser = async (req, res) => {
   }
 };
 
+const validateRegistration = async (req, res) => {
+  try {
+    const { mobileNo, email } = req.body;
+
+    if (!email || !mobileNo) {
+      throw new Error("This fields are required");
+    }
+
+    const existingMobileNo = await User.findOne({ mobileNo });
+    const existingEmail = await User.findOne({ email });
+
+    if (existingEmail) {
+      throw new Error("Email already exist");
+    }
+
+    if (existingMobileNo) {
+      throw new Error("Mobile number already exist");
+    }
+
+    res.status(200).send({ message: "Validated informations" });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -270,6 +295,112 @@ const loginUser = async (req, res) => {
   }
 };
 
+const loginUserMobileNo = async (req, res) => {
+  try {
+    const { mobileNo } = req.body;
+    const user = await User.findOne({ mobileNo });
+
+    if (!user) {
+      throw new Error("Mobile No doesn't match in our records");
+    }
+
+    // const isMatch = await compare(password, user.password);
+    // if (!isMatch) {
+    //   throw new Error("Password is not correct");
+    // }
+
+    // if (user) {
+    // const token = jwt.sign(
+    //   {
+    //     userId: user._id,
+    //     mobileNo: user.mobileNo,
+    //   },
+    //   process.env.JWT_SECRET,
+    //   { expiresIn: "30d" }
+    // );
+
+    sendVerificationCode(user.mobileNo, user.secretCode);
+    res.status(200).send({
+      // token,
+      userId: user._id,
+      // isFirstTimeLogin: user.isFirstTimeLogin,
+    });
+    // }
+    // else {
+    //   const token = jwt.sign(
+    //     {
+    //       userId: user._id,
+    //       mobileNo: user.mobileNo,
+    //     },
+    //     process.env.JWT_SECRET,
+    //     { expiresIn: "30d" }
+    //   );
+
+    //   sendVerificationCode(user.mobileNo, user.secretCode);
+    //   res.status(200).send({
+    //     token,
+    //     userId: user._id,
+    //     isFirstTimeLogin: user.isFirstTimeLogin,
+    //   });
+    // }
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
+const loginPassCode = async (req, res) => {
+  try {
+    const { password } = req.body;
+    const { userId } = req.user;
+    const user = await User.findById(userId);
+
+    // if (!user) {
+    //   throw new Error("Mobile No doesn't match in our records");
+    // }
+    if (!user) {
+      throw new Error("User not found!");
+    }
+    const isMatch = await compare(password, user.password);
+    if (!isMatch) {
+      throw new Error("Passcode is not correct");
+    }
+
+    // const token = jwt.sign(
+    //   {
+    //     userId: user._id,
+    //     mobileNo: user.mobileNo,
+    //   },
+    //   process.env.JWT_SECRET,
+    //   { expiresIn: "30d" }
+    // );
+
+    // sendVerificationCode(user.mobileNo, user.secretCode);
+    res.status(200).send({
+      message: "Successfully link in",
+    });
+
+    // else {
+    //   const token = jwt.sign(
+    //     {
+    //       userId: user._id,
+    //       mobileNo: user.mobileNo,
+    //     },
+    //     process.env.JWT_SECRET,
+    //     { expiresIn: "30d" }
+    //   );
+
+    //   sendVerificationCode(user.mobileNo, user.secretCode);
+    //   res.status(200).send({
+    //     token,
+    //     userId: user._id,
+    //     isFirstTimeLogin: user.isFirstTimeLogin,
+    //   });
+    // }
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
 const validateCodeFirstTimeLogin = async (req, res) => {
   try {
     const { secretCode } = req.body;
@@ -280,9 +411,46 @@ const validateCodeFirstTimeLogin = async (req, res) => {
       return res.status(400).send({ message: "Invalid secret code" });
     }
 
-    user.isFirstTimeLogin = false;
+    // user.isFirstTimeLogin = false;
     user.save();
     res.status(200).send({ message: "Valid secret code" });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
+const validateCodeLogin = async (req, res) => {
+  try {
+    const { secretCode, userId } = req.body;
+    // const { userId } = req.user;
+
+    const user = await User.findById(userId);
+
+    if (secretCode !== user.secretCode) {
+      return res.status(400).send({ message: "Invalid secret code" });
+    }
+
+    // user.isFirstTimeLogin = false;
+    user.save();
+
+    if (secretCode === user.secretCode) {
+      const token = jwt.sign(
+        {
+          userId: user._id,
+          secretCode: user.secretCode,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "30d" }
+      );
+
+      res.status(200).send({
+        token,
+        // isFirstTimeLogin: user.isFirstTimeLogin,
+        message: "Valid secret code",
+      });
+    }
+
+    // res.status(200).send({ message: "Valid secret code" });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -393,6 +561,9 @@ const findUserAccount = async (req, res) => {
     if (!user) {
       throw new Error("Your email/mobile no. doesn't match in our records");
     }
+    if (user) {
+      sendVerificationCode(user.mobileNo, user.secretCode);
+    }
 
     res.status(200).send({ secretCode: user.secretCode, userId: user._id });
   } catch (error) {
@@ -408,9 +579,27 @@ const uploadProfilePicture = async (req, res) => {
   }
 };
 
+// const refreshSecretCode = async (req, res) => {
+//   try {
+//     const { userId } = req.user;
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       throw new Error("User not found!");
+//     }
+
+//     user.secretCode = generateUniqueCode();
+//     user.save();
+//     res.status(200).send({
+//       message: "Secret code successfully changed!",
+//       secretCode: user.secretCode,
+//     });
+//   } catch (error) {
+//     res.status(500).send({ message: error.message });
+//   }
+// };
 const refreshSecretCode = async (req, res) => {
   try {
-    const { userId } = req.user;
+    const { userId } = req.body;
     const user = await User.findById(userId);
     if (!user) {
       throw new Error("User not found!");
@@ -555,7 +744,9 @@ const sendOTP = async (req, res) => {
 
 export {
   createUser,
+  validateRegistration,
   loginUser,
+  loginUserMobileNo,
   updateUser,
   updateUserPassword,
   getAllUser,
@@ -572,4 +763,6 @@ export {
   saveProfilePicturePath,
   refreshQrCode,
   sendOTP,
+  loginPassCode,
+  validateCodeLogin,
 };
