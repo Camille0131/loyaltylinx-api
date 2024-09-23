@@ -16,6 +16,11 @@ router.get("/get-all", user.getAllUser);
 router.get("/profile", protect, user.getUserProfile);
 router.post("/validate-code-login", protect, user.validateCodeFirstTimeLogin);
 router.post("/account-verification", protect, user.accountVerification);
+router.post(
+  "/account-verification/update",
+  protect,
+  user.accountVerificationAdded
+);
 router.post("/validate-code", user.validateCode);
 router.post("/validate-code-with-token", protect, user.validateCodeWithToken);
 router.post("/find-account", user.findUserAccount);

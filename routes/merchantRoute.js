@@ -24,6 +24,12 @@ router.get(
   merchant.getAllBorrowerRequests
 );
 
+router.post(
+  "/approve-borrower-request/:creditRequestId",
+  merchantProtect,
+  merchant.approveBorrowerRequest
+);
+
 router.get(
   "/get-borrower-requests/:id",
   merchantProtect,

@@ -219,6 +219,185 @@ const getBorrowerRequestsById = async (req, res) => {
     res.status(500).send({ message: error.message });
   }
 };
+const approveBorrowerRequest = async (req, res) => {
+  try {
+    const { merchantId } = req.user;
+    const { creditRequestId } = req.params;
+    const { status } = req.body;
+
+    const merchant = await Merchant.findById(merchantId).populate({
+      path: "borrowerRequests.userId",
+    });
+
+    const requests = merchant.borrowerRequests || [];
+    // console.log(requests[0].creditRequestNumber.toString());
+
+    const requestToApprove = requests.find(
+      (request) => request.creditRequestNumber.toString() === creditRequestId
+    );
+
+    if (!requestToApprove) {
+      throw new Error("No credit request found at approve");
+    }
+    // Check if the request has already been approved
+    if (requestToApprove.isApproved) {
+      throw new Error("This request has already been approved");
+    }
+    // Update the user's credit request status
+    const user = await User.findById(requestToApprove.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (status != "approve") {
+      throw new Error("denied");
+    }
+
+    const creditRequests = user.creditRequests || [];
+
+    const creditRequestToUpdate = creditRequests.find(
+      (request) => request.creditRequestNumber.toString() === creditRequestId
+    );
+    if (!creditRequestToUpdate) {
+      throw new Error("No credit request found update");
+    }
+
+    creditRequestToUpdate.status = status;
+
+    // Calculate due date based on term and monthly payment
+    const term = creditRequestToUpdate.term; // assume term is in months
+    const monthlyPayment = creditRequestToUpdate.monthlyInstallment;
+    const approvalDate = new Date();
+    const dueDate = new Date(
+      approvalDate.getFullYear(),
+      approvalDate.getMonth(),
+      approvalDate.getDate() + 30
+    ); // add 30 days to the current date
+
+    // Create payment log
+    const paymentLog = [];
+    for (let i = 0; i < term; i++) {
+      const paymentDate = new Date(
+        dueDate.getFullYear(),
+        dueDate.getMonth(),
+        dueDate.getDate() + i * 30
+      ); // add 30 days to the previous payment date
+      paymentLog.push({
+        paymentDate,
+        paymentAmount: monthlyPayment,
+        status: "unpaid",
+      });
+    }
+
+    creditRequestToUpdate.paymentLog = paymentLog;
+    user.balance += creditRequestToUpdate.creditAmount;
+    user.credits.push(creditRequestToUpdate);
+    await user.save();
+    const updatedBorrowerRequests = merchant.borrowerRequests.map((request) => {
+      if (request.creditRequestNumber.toString() === creditRequestId) {
+        request.isApproved = true;
+        request.status = status;
+      }
+      return request;
+    });
+
+    merchant.borrowerRequests = updatedBorrowerRequests;
+    await merchant.save();
+    res.status(200).send({ message: "Borrower request approved successfully" });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+// const approveBorrowerRequest = async (req, res) => {
+//   try {
+//     const { merchantId } = req.user;
+//     const { id } = req.params;
+//     const { status } = req.body;
+
+//     const merchant = await Merchant.findById(merchantId).populate({
+//       path: "borrowerRequests.userId",
+//     });
+
+//     const requests = merchant.borrowerRequests || [];
+//     const requestToApprove = requests.find(
+//       (request) => request.userId.toString() === id
+//     );
+
+//     if (!requestToApprove) {
+//       throw new Error("No credit request found at approve");
+//     }
+
+//     // console.log(!requestToApprove);
+//     //  // Log the userId
+
+//     // Update the user's credit request status
+//     const user = await User.findById(requestToApprove.userId);
+//     if (!user) {
+//       throw new Error("User not found");
+//     }
+
+//     if (status != "approve") {
+//       throw new Error("denied");
+//     }
+
+//     const creditRequests = user.creditRequests || [];
+//     const creditRequestToUpdate = creditRequests.find(
+//       (request) => request.merchantId.toString() === merchantId.toString()
+//     );
+//     // console.log(creditRequests.merchantId);
+//     // console.log(merchant);
+//     const updatedBorrowerRequests = merchant.borrowerRequests.map((request) => {
+//       if (request.userId.toString() === id) {
+//         request.status = status;
+//       }
+//       return request;
+//     });
+
+//     if (!creditRequestToUpdate) {
+//       throw new Error("No credit request found update");
+//     }
+
+//     merchant.borrowerRequests = updatedBorrowerRequests;
+//     merchant.save();
+
+//     // Calculate due date based on term and monthly payment
+//     const term = creditRequestToUpdate.term; // assume term is in months
+//     const monthlyPayment = creditRequestToUpdate.monthlyInstallment;
+//     const approvalDate = new Date();
+//     const dueDate = new Date(
+//       approvalDate.getFullYear(),
+//       approvalDate.getMonth(),
+//       approvalDate.getDate() + 30
+//     ); // add 30 days to the current date
+
+//     // Create payment log
+//     const paymentLog = [];
+//     for (let i = 0; i < term; i++) {
+//       const paymentDate = new Date(
+//         dueDate.getFullYear(),
+//         dueDate.getMonth(),
+//         dueDate.getDate() + i * 30
+//       ); // add 30 days to the previous payment date
+//       paymentLog.push({
+//         paymentDate,
+//         paymentAmount: monthlyPayment,
+//         status: "unpaid",
+//       });
+//     }
+
+//     creditRequestToUpdate.paymentLog = paymentLog;
+//     creditRequestToUpdate.status = status;
+
+//     console.log(creditRequestToUpdate);
+
+//     user.credits.push(creditRequestToUpdate);
+//     await user.save();
+
+//     res.status(200).send({ message: "Borrower request approved successfully" });
+//   } catch (error) {
+//     res.status(500).send({ message: error.message });
+//   }
+// };
 
 export {
   createMerchant,
@@ -226,4 +405,5 @@ export {
   getAllMerchant,
   getAllBorrowerRequests,
   getBorrowerRequestsById,
+  approveBorrowerRequest,
 };

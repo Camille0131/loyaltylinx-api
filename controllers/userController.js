@@ -550,6 +550,71 @@ const accountVerification = async (req, res) => {
   }
 };
 
+const accountVerificationAdded = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const user = await User.findById(userId);
+
+    const {
+      birthdate,
+      gender,
+      address,
+      city,
+      province,
+      country,
+      postalCode,
+      validId,
+      selfiePicture,
+      incomeSoure,
+      monthlySalary,
+    } = req.body;
+
+    if (
+      !birthdate ||
+      !gender ||
+      !address ||
+      !city ||
+      !province ||
+      !country ||
+      !postalCode ||
+      !validId ||
+      !incomeSoure ||
+      !monthlySalary ||
+      !selfiePicture
+    ) {
+      throw new Error("This fields are required");
+    }
+
+    const newUser = {
+      birthdate: birthdate,
+      gender: gender,
+      fullAddress: {
+        address: address,
+        city: city,
+        province: province,
+        country: country,
+        postalCode: postalCode,
+      },
+      verification: {
+        validId: validId,
+        selfiePicture: selfiePicture,
+        status: "pending",
+      },
+      incomeSoure: incomeSoure,
+      monthlySalary: monthlySalary,
+    };
+
+    user.set(newUser);
+    await user.save();
+
+    res
+      .status(200)
+      .send({ message: "We're verifying your account!", user: user });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
 const findUserAccount = async (req, res) => {
   try {
     const { email, mobileNo } = req.body;
@@ -615,6 +680,20 @@ const refreshSecretCode = async (req, res) => {
     res.status(500).send({ message: error.message });
   }
 };
+function generateCreditRequestNumber() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  const second = date.getSeconds();
+  const millisecond = date.getMilliseconds();
+
+  const creditRequestNumber = `CR${year}${month}${day}${hour}${minute}${second}${millisecond}`;
+
+  return creditRequestNumber;
+}
 
 const creditRequest = async (req, res) => {
   try {
@@ -625,6 +704,7 @@ const creditRequest = async (req, res) => {
       incomeSourceAmount,
       creditAmount,
       term,
+      monthlyInstallment,
       dateApproved,
     } = req.body;
 
@@ -644,8 +724,10 @@ const creditRequest = async (req, res) => {
     if (existingPendingRequest) {
       throw new Error("You have a pending credit application");
     }
+    const creditRequestNumber = generateCreditRequestNumber();
 
     merchant.borrowerRequests.push({
+      creditRequestNumber: creditRequestNumber,
       userId: currentUser._id,
       userName: currentUser.firstName,
       isApproved: false,
@@ -653,19 +735,23 @@ const creditRequest = async (req, res) => {
       incomeSourceAmount: incomeSourceAmount,
       creditAmount: creditAmount,
       applicationDate: new Date(),
+      monthlyInstallment: monthlyInstallment,
       term: term,
       status: "pending",
       dateApproved: dateApproved,
     });
 
     currentUser.creditRequests.push({
+      creditRequestNumber: creditRequestNumber,
       merchantId: merchant._id,
       merchantName: merchant.storeName,
+      merchantLogo: merchant.profilePicture,
       isApproved: false,
       incomeSource: incomeSource,
       incomeSourceAmount: incomeSourceAmount,
       creditAmount: creditAmount,
       applicationDate: new Date(),
+      monthlyInstallment: monthlyInstallment,
       term: term,
       status: "pending",
       dateApproved: dateApproved,
@@ -765,4 +851,5 @@ export {
   sendOTP,
   loginPassCode,
   validateCodeLogin,
+  accountVerificationAdded
 };

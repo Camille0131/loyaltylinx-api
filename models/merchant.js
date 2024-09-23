@@ -23,16 +23,20 @@ const merchantSchema = new mongoose.Schema(
     creditPoints: { type: Number, default: 0 },
     borrowerRequests: [
       {
+        creditRequestNumber: { type: String, required: true },
+
         userId: { type: String, required: true },
         userName: { type: String, required: true },
         isApproved: { type: Boolean, required: true },
         incomeSource: { type: String },
         incomeSourceAmount: { type: String },
         creditAmount: { type: Number, required: true },
-        applicationDate: { type: Date, required: true },
+        monthlyInstallment: { type: String },
         term: { type: String },
+        applicationDate: { type: Date, required: true },
         status: { type: String, required: true },
         dateApproved: { type: Date },
+        limit: { type: String },
       },
     ],
   },

@@ -9,6 +9,7 @@ const userCreditAppllicationSchema = new mongoose.Schema(
     isApproved: { type: Boolean, required: true, default: false },
     incomeSource: { type: String, required: true },
     incomeSourceAmount: { type: String, required: true },
+    monthlyInstallment: { type: String, required: true },
     creditAmount: { type: Number, required: true, default: 0 },
     approvedAt: { type: Date, required: true, default: null },
     term: { type: String, required: true },
