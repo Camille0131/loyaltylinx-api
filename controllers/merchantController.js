@@ -4,6 +4,7 @@ import { hash, compare } from "bcrypt";
 import jwt from "jsonwebtoken";
 // import { cloudinary } from "../config/cloudinary.js";
 import crypto from "crypto";
+import Transaction from "../models/transactions..js";
 
 function generateUniqueCode() {
   let code = "";
@@ -219,6 +220,7 @@ const getBorrowerRequestsById = async (req, res) => {
     res.status(500).send({ message: error.message });
   }
 };
+
 const approveBorrowerRequest = async (req, res) => {
   try {
     const { merchantId } = req.user;
@@ -245,11 +247,12 @@ const approveBorrowerRequest = async (req, res) => {
     }
     // Update the user's credit request status
     const user = await User.findById(requestToApprove.userId);
+
     if (!user) {
       throw new Error("User not found");
     }
 
-    if (status != "approve") {
+    if (status != "approved") {
       throw new Error("denied");
     }
 
@@ -262,8 +265,32 @@ const approveBorrowerRequest = async (req, res) => {
       throw new Error("No credit request found update");
     }
 
-    creditRequestToUpdate.status = status;
+    const userName = user.firstName + " " + user.lastName;
+    const userEmail = user.email;
+    const userMobileNo = user.mobileNo;
+    const merchantLogo = merchant.profilePicture;
+    const userId = requestToApprove.userId;
+    const amount = creditRequestToUpdate.creditAmount;
+    const description = "Application credit approval";
+    const transactionType = "credit_applied";
 
+    const transaction = new Transaction({
+      userName: userName,
+      userId: userId,
+      userEmail: userEmail,
+      transactionType: transactionType,
+      userMobileNo: userMobileNo,
+      merchantId: merchantId,
+      amount: amount,
+      merchantLogo: merchantLogo,
+      description: description,
+      dateTime: new Date(),
+    });
+
+    await transaction.save();
+
+    creditRequestToUpdate.status = status;
+    creditRequestToUpdate.isApproved = true;
     // Calculate due date based on term and monthly payment
     const term = creditRequestToUpdate.term; // assume term is in months
     const monthlyPayment = creditRequestToUpdate.monthlyInstallment;
@@ -291,7 +318,9 @@ const approveBorrowerRequest = async (req, res) => {
 
     creditRequestToUpdate.paymentLog = paymentLog;
     user.balance += creditRequestToUpdate.creditAmount;
-    user.credits.push(creditRequestToUpdate);
+    user.transactionHistory.push(transaction);
+    // user.credits.push(creditRequestToUpdate);
+
     await user.save();
     const updatedBorrowerRequests = merchant.borrowerRequests.map((request) => {
       if (request.creditRequestNumber.toString() === creditRequestId) {
@@ -301,6 +330,7 @@ const approveBorrowerRequest = async (req, res) => {
       return request;
     });
 
+    merchant.transactionHistory.push(transaction);
     merchant.borrowerRequests = updatedBorrowerRequests;
     await merchant.save();
     res.status(200).send({ message: "Borrower request approved successfully" });

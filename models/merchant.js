@@ -39,6 +39,7 @@ const merchantSchema = new mongoose.Schema(
         limit: { type: String },
       },
     ],
+    transactionHistory: [],
   },
   {
     timestamps: true,

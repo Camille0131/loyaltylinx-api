@@ -6,11 +6,13 @@ import { connectDB } from "./config/database.js";
 
 // user routes
 import userRoutes from "./routes/userRoutes.js";
+import productRoutes from "./routes/productRoute.js";
 import rewardRoutes from "./routes/rewardRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import merchantRoutes from "./routes/merchantRoute.js";
 import logRoutes from "./routes/logRoutes.js";
 import uploadRoutes from "./routes/uploadRoute.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
 
 // initialize app
 const app = express();
@@ -19,6 +21,14 @@ dotenv.config();
 
 // middlewares
 app.use(cors());
+// app.use(
+//   cors({
+//     origin: "https://loyalty-linx-web.vercel.app",
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//   })
+// );
 app.use(morgan("dev"));
 app.use(express.json());
 
@@ -48,7 +58,10 @@ startServer();
 app.get("/api/test", (req, res) => {
   res.send("Hello World!s");
 });
+
 app.use("/api/user", userRoutes);
+app.use("/api/product", productRoutes);
+app.use("/api/category", categoryRoutes);
 app.use("/api/rewards", rewardRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/merchant", merchantRoutes);

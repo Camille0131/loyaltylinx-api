@@ -7,6 +7,7 @@ import crypto from "crypto";
 import * as upload from "../controllers/uploadController.js";
 import axios from "axios";
 import * as dotenv from "dotenv";
+import Transaction from "../models/transactions..js";
 dotenv.config();
 
 const sendVerificationCode = async (phoneNumber, secretCode) => {
@@ -662,6 +663,7 @@ const uploadProfilePicture = async (req, res) => {
 //     res.status(500).send({ message: error.message });
 //   }
 // };
+
 const refreshSecretCode = async (req, res) => {
   try {
     const { userId } = req.body;
@@ -719,7 +721,7 @@ const creditRequest = async (req, res) => {
     const existingPendingRequest = merchant.borrowerRequests.find(
       (request) =>
         request.userId === userId.toString() && request.status === "pending"
-    );
+    );  
 
     if (existingPendingRequest) {
       throw new Error("You have a pending credit application");
@@ -828,6 +830,52 @@ const sendOTP = async (req, res) => {
   }
 };
 
+const addTransaction = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const { merchantId } = req.params;
+    const { transactionType, amount, description } = req.body;
+
+    const user = await User.findById(userId);
+    const merchant = await Merchant.findById(merchantId);
+
+    if (!user) {
+      throw new Error("User not found!");
+    }
+
+    if (!merchant) {
+      throw new Error("Merchant not found!");
+    }
+    const userName = user.firstName + " " + user.lastName;
+    const userEmail = user.email;
+    const userMobileNo = user.mobileNo;
+    const merchantLogo = merchant.profilePicture;
+
+    const transaction = new Transaction({
+      userName: userName,
+      userId: userId,
+      userEmail: userEmail,
+      transactionType: transactionType,
+      userMobileNo: userMobileNo,
+      merchantId: merchantId,
+      amount: amount,
+      merchantLogo: merchantLogo,
+      description: description,
+      dateTime: new Date(),
+    });
+
+    await transaction.save();
+
+    user.transactionHistory.push(transaction);
+
+    await user.save();
+
+    res.status(200).send({ message: "Transaction added successfully" });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
 export {
   createUser,
   validateRegistration,
@@ -851,5 +899,6 @@ export {
   sendOTP,
   loginPassCode,
   validateCodeLogin,
-  accountVerificationAdded
+  accountVerificationAdded,
+  addTransaction,
 };

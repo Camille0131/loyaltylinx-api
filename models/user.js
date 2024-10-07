@@ -71,30 +71,8 @@ const userSchema = new mongoose.Schema(
         ],
       },
     ],
-    credits: [
-      {
-        creditRequestNumber: { type: String, required: true },
-        merchantId: { type: String, required: true },
-        merchantName: { type: String, required: true },
-        merchantLogo: { type: String, required: true },
-        isApproved: { type: Boolean, required: true, default: false },
-        incomeSource: { type: String },
-        incomeSourceAmount: { type: String },
-        monthlyInstallment: { type: String },
-        creditAmount: { type: Number, required: true, default: 0 },
-        applicationDate: { type: Date, required: true, default: null },
-        term: { type: String },
-        status: { type: String, required: true },
-        dateApproved: { type: Date },
-        paymentLog: [
-          {
-            paymentDate: { type: Date },
-            paymentAmount: { type: Number },
-            status: { type: String },
-          },
-        ],
-      },
-    ],
+
+    transactionHistory: [],
   },
   {
     timestamps: true,
