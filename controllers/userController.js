@@ -126,7 +126,7 @@ const validateRegistration = async (req, res) => {
       throw new Error("Mobile number already exist");
     }
 
-    res.status(200).send({ message: "Validated informations" });
+    res.status(200).send({ message: "Eligible for registration" });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -204,18 +204,18 @@ const updateUserPassword = async (req, res) => {
 
 const changePassword = async (req, res) => {
   try {
-    const { newPassword, confirmPassword } = req.body;
+    const { newPasscode, confirmPasscode } = req.body;
     const user = await User.findById(req.body.id);
 
     if (!user) {
       throw new Error("User not found!");
     }
 
-    if (newPassword !== confirmPassword) {
+    if (newPasscode !== confirmPasscode) {
       throw new Error("Confirm password doesn't match");
     }
 
-    const hashedPassword = await hash(newPassword, 10);
+    const hashedPassword = await hash(newPasscode, 10);
     user.password = hashedPassword;
     user.save();
 
@@ -721,7 +721,7 @@ const creditRequest = async (req, res) => {
     const existingPendingRequest = merchant.borrowerRequests.find(
       (request) =>
         request.userId === userId.toString() && request.status === "pending"
-    );  
+    );
 
     if (existingPendingRequest) {
       throw new Error("You have a pending credit application");

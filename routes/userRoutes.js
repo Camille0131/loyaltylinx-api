@@ -2,6 +2,7 @@ import * as user from "../controllers/userController.js";
 import { Router } from "express";
 import { protect, protectByRole } from "../middlewares/protect.js";
 import { userRole } from "../constants/globalConst.js";
+import * as cart from "../controllers/cartController.js";
 
 const router = Router();
 
@@ -35,5 +36,9 @@ router.post("/send-otp", protect, user.sendOTP);
 router.post("/passcode", protect, user.loginPassCode);
 router.post("/validate-login", user.validateCodeLogin);
 router.post("/transactions/:merchantId", protect, user.addTransaction);
+router.post("/add-to-cart", protect, cart.addItemToCart);
+router.post("/delete-item-cart", protect, cart.removeItemFromCart);
+router.post("/get-item-cart", protect, cart.getCartByUserId);
+router.post("/quantity-item-cart", protect, cart.incrementDecrement);
 
 export default router;

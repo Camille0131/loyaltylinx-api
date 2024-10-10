@@ -35,5 +35,6 @@ router.get(
   merchantProtect,
   merchant.getBorrowerRequestsById
 );
+router.get("/:id", merchant.getAllMerchantID);
 
 export default router;

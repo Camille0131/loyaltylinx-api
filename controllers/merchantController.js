@@ -185,6 +185,17 @@ const getAllMerchant = async (req, res) => {
   }
 };
 
+const getAllMerchantID = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const merchants = await Merchant.findById(id);
+
+    res.status(200).json(merchants);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
 const getAllBorrowerRequests = async (req, res) => {
   try {
     const { merchantId } = req.user;
@@ -436,4 +447,5 @@ export {
   getAllBorrowerRequests,
   getBorrowerRequestsById,
   approveBorrowerRequest,
+  getAllMerchantID,
 };

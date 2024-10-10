@@ -1,5 +1,3 @@
-import express from "express";
-import { hash, compare } from "bcrypt";
 import Product from "../models/product.js";
 import * as dotenv from "dotenv";
 dotenv.config();

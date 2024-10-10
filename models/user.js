@@ -24,7 +24,6 @@ const userSchema = new mongoose.Schema(
       country: { type: String, default: "Philippines" },
       postalCode: { type: String, default: "" },
     },
-
     verification: {
       isVerified: { type: Boolean, required: true, default: false },
       verificationCode: { type: String },
@@ -71,7 +70,58 @@ const userSchema = new mongoose.Schema(
         ],
       },
     ],
-
+    cart: [
+      {
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          required: true,
+        },
+        merchant_id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Merchant", // Correct model name
+        },
+        name: {
+          type: String,
+          required: true,
+        },
+        price: {
+          type: Number,
+          required: true,
+        },
+        weight: {
+          type: Number, // Product weight
+          required: true,
+        },
+        description: {
+          type: String,
+        },
+        image: {
+          type: String, // Cloudinary image URL
+          required: true,
+        },
+        categoryId: {
+          type: mongoose.Schema.Types.ObjectId, // Reference to Category model
+          ref: "Category",
+          required: true,
+        },
+        inStock: {
+          type: Boolean,
+          default: true,
+        },
+        location: {
+          type: String, // Product location
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          default: 0,
+        },
+        addedDate: {
+          type: Date,
+          default: Date.now, // Automatically sets the creation date
+        },
+      },
+    ],
     transactionHistory: [],
   },
   {
