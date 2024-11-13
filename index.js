@@ -13,7 +13,9 @@ import merchantRoutes from "./routes/merchantRoute.js";
 import logRoutes from "./routes/logRoutes.js";
 import uploadRoutes from "./routes/uploadRoute.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
-
+import orderRoutes from "./routes/orderRoutes.js";
+import orderDetailsRoutes from "./routes/orderDetailesRoutes.js";
+import transactionRoutes from "./routes/transactionsRoutes.js"
 // initialize app
 const app = express();
 const port = process.env.PORT || 5000;
@@ -64,6 +66,9 @@ app.use("/api/product", productRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/rewards", rewardRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/transactions", transactionRoutes);
 app.use("/api/merchant", merchantRoutes);
 app.use("/api/logs", logRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/order", orderRoutes);
+app.use("/api/orderDetails", orderDetailsRoutes);

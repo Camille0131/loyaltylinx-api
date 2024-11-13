@@ -10,6 +10,7 @@ const merchantSchema = new mongoose.Schema(
       default:
         "https://res.cloudinary.com/duhaupnxy/image/upload/v1712134056/samples/balloons.jpg",
     },
+    awardingAmount: { type: Number, default: 100 },
     isActive: { type: Boolean, default: true },
     role: { type: String, required: true, default: "merchant" },
     firstName: { type: String, required: true },
@@ -23,8 +24,7 @@ const merchantSchema = new mongoose.Schema(
     creditPoints: { type: Number, default: 0 },
     borrowerRequests: [
       {
-        creditRequestNumber: { type: String, required: true },
-
+        creditRequestNumber: { type: String },
         userId: { type: String, required: true },
         userName: { type: String, required: true },
         isApproved: { type: Boolean, required: true },
@@ -40,6 +40,7 @@ const merchantSchema = new mongoose.Schema(
       },
     ],
     transactionHistory: [],
+    orders: [],
   },
   {
     timestamps: true,

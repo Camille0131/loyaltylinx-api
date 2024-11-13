@@ -10,19 +10,39 @@ const addItemToCart = async (req, res) => {
     const { userId } = req.user;
     const { productId, quantity } = req.body;
     const user = await User.findById(userId);
-    const product = await Product.findById(productId);
     let cart = await Cart.findOne({ user_id: userId });
+    const product = await Product.findById(productId);
+    const productName = product.name;
+    // if (!cart) {
+    //   return res.status(404).json({ message: "Cart not found" });
+    // }
 
-    const itemExist = cart.items.some(
-      (cartItem) => cartItem.productId.toString() === productId
-    );
+    // if (itemExist) {
+    //   throw new Error("Item already in cart");
+    // }
 
-    if (itemExist) {
-      throw new Error("Item already in cart");
-    }
-
-    if (cart) {
+    if (!cart) {
       // If cart exists, check if item already exists
+      cart = new Cart({
+        user_id: userId,
+
+        items: [{ productId, quantity, productName }],
+      });
+
+      user.cart.push({
+        productId: product._id,
+        merchantId: product.merchant_id,
+        name: productName,
+        price: product.price,
+        quantity: quantity,
+        weight: product.weight,
+        description: product.description,
+        image: product.image,
+        categoryId: product.categoryId,
+        inStock: product.inStock,
+        location: product.location,
+      });
+    } else {
       const itemIndex = cart.items.findIndex(
         (item) => item.productId.toString() === productId
       );
@@ -34,31 +54,43 @@ const addItemToCart = async (req, res) => {
         // Else, add the new item
         cart.items.push({ productId, quantity });
       }
-    } else {
       // If no cart, create a new one
-      cart = new Cart({
-        user_id: userId,
-        userName: `${user.firstName} ${user.lastName}`,
-        items: [{ productId, quantity, productName }],
-      });
+
+      const itemIndexUser = user.cart.findIndex(
+        (item) => item.productId.toString() === productId
+      );
+
+      if (itemIndexUser > -1) {
+        user.cart[itemIndexUser].quantity += quantity;
+      } else {
+        user.cart.push({
+          productId: product._id,
+          merchantId: product.merchant_id,
+          name: productName,
+          price: product.price,
+          quantity: quantity,
+          weight: product.weight,
+          description: product.description,
+          image: product.image,
+          categoryId: product.categoryId,
+          inStock: product.inStock,
+          location: product.location,
+        });
+      }
+      // const itemExist = cart.items.some(
+      //   (cartItem) => cartItem.productId.toString() === productId
+      // );
+
+      // const quantityToUpdate = user.cart.find(
+      //   (item) => item.productId.toString() === productId
+      // );
+
+      // const itemToUpdate = cart.items.find(
+      //   (item) => item.productId.toString() === productId
+      // );
     }
+    // // const newProduct = {};
 
-    // const newProduct = {};
-
-    user.cart.push({
-      productId: product._id,
-      merchantId: product.merchant_id,
-      name: product.name,
-      price: product.price,
-      quantity: quantity,
-      weight: product.weight,
-      description: product.description,
-      image: product.image,
-      categoryId: product.categoryId,
-      inStock: product.inStock,
-      location: product.location,
-      addedDate: new Date(),
-    });
     await user.save();
     const savedCart = await cart.save();
     res.status(200).json(savedCart);
@@ -92,30 +124,21 @@ const incrementDecrement = async (req, res) => {
       (item) => item.productId.toString() === productId
     );
 
-    if (quantityToUpdate) {
-      if (action === "increase") {
-        quantityToUpdate.quantity += 1;
-      } else if (action === "decrease") {
-        if (quantityToUpdate.quantity > 1) {
-          quantityToUpdate.quantity -= 1;
-        } else {
-        }
-      }
-      await user.save();
-    }
-
     if (itemToUpdate) {
       if (action === "increase") {
         itemToUpdate.quantity += 1;
+        quantityToUpdate.quantity += 1;
       } else if (action === "decrease") {
         if (itemToUpdate.quantity > 1) {
           itemToUpdate.quantity -= 1;
+          quantityToUpdate.quantity -= 1;
         } else {
-          return res 
+          return res
             .status(400)
             .json({ message: "Quantity cannot be less than 1" });
         }
       }
+      await user.save();
       await cart.save();
       res.json({ message: "Item quantity update successfully" });
     } else {
@@ -130,10 +153,10 @@ const incrementDecrement = async (req, res) => {
 const getCartByUserId = async (req, res) => {
   const { userId } = req.user;
   const user = await User.findById(userId);
+  const cart = await Cart.findOne({ user_id: userId }).populate(
+    "items.productId"
+  );
   try {
-    const cart = await Cart.findOne({ user_id: userId }).populate(
-      "items.productId"
-    );
     if (!cart) {
       return res.status(404).json({ message: "Cart not found" });
     }
@@ -145,7 +168,7 @@ const getCartByUserId = async (req, res) => {
   }
 };
 
-//delete item in cart
+//delete item in cartnpm
 const removeItemFromCart = async (req, res) => {
   const { userId } = req.user;
   const { productId } = req.body;

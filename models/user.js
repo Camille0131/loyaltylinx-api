@@ -46,9 +46,11 @@ const userSchema = new mongoose.Schema(
     isFirstTimeLogin: { type: Boolean, default: true },
     limit: { type: String, required: true, default: "10000" },
     balance: { type: Number, default: 0 },
+    pointsBalance: { type: Number, default: 0 },
+    creditsBalance: { type: Number, default: 0 },
     creditRequests: [
       {
-        creditRequestNumber: { type: String, required: true },
+        creditRequestNumber: { type: String },
         merchantId: { type: String, required: true },
         merchantName: { type: String, required: true },
         merchantLogo: { type: String, required: true },
@@ -76,9 +78,8 @@ const userSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           required: true,
         },
-        merchant_id: {
+        merchantId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Merchant", // Correct model name
         },
         name: {
           type: String,
@@ -123,6 +124,7 @@ const userSchema = new mongoose.Schema(
       },
     ],
     transactionHistory: [],
+    orders: [],
   },
   {
     timestamps: true,

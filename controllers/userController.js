@@ -682,6 +682,7 @@ const refreshSecretCode = async (req, res) => {
     res.status(500).send({ message: error.message });
   }
 };
+
 function generateCreditRequestNumber() {
   const date = new Date();
   const year = date.getFullYear();

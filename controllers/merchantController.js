@@ -329,6 +329,7 @@ const approveBorrowerRequest = async (req, res) => {
 
     creditRequestToUpdate.paymentLog = paymentLog;
     user.balance += creditRequestToUpdate.creditAmount;
+    user.creditsBalance += creditRequestToUpdate.creditAmount;
     user.transactionHistory.push(transaction);
     // user.credits.push(creditRequestToUpdate);
 

@@ -17,7 +17,7 @@ const transactionSchema = new mongoose.Schema({
   },
   transactionType: {
     type: String,
-    enum: ["redeem", "credit_applied", "refund", "add", "substract"],
+    enum: ["redeem", "credit_applied", "refund", "points add", "substract"],
   },
   amount: {
     type: Number,
